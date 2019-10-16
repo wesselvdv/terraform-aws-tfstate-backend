@@ -164,7 +164,7 @@ resource "aws_dynamodb_table" "with_server_side_encryption" {
 }
 
 resource "aws_dynamodb_table" "without_server_side_encryption" {
-  count          = var.enable_server_side_encryption && var.enabled ? 0 : 1
+  count          = !var.enable_server_side_encryption && var.enabled ? 1 : 0
   name           = module.dynamodb_table_label.id
   read_capacity  = var.read_capacity
   write_capacity = var.write_capacity

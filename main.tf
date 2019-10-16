@@ -136,7 +136,7 @@ module "dynamodb_table_label" {
 }
 
 resource "aws_dynamodb_table" "with_server_side_encryption" {
-  count          = var.enable_server_side_encryption && var.enabled == true ? 1 : 0
+  count          = var.enable_server_side_encryption && var.enabled ? 1 : 0
   name           = module.dynamodb_table_label.id
   read_capacity  = var.read_capacity
   write_capacity = var.write_capacity
@@ -164,7 +164,7 @@ resource "aws_dynamodb_table" "with_server_side_encryption" {
 }
 
 resource "aws_dynamodb_table" "without_server_side_encryption" {
-  count          = var.enable_server_side_encryption && var.enabled == true ? 0 : 1
+  count          = var.enable_server_side_encryption && var.enabled ? 0 : 1
   name           = module.dynamodb_table_label.id
   read_capacity  = var.read_capacity
   write_capacity = var.write_capacity
@@ -212,7 +212,7 @@ data "template_file" "terraform_backend_config" {
 }
 
 resource "local_file" "terraform_backend_config" {
-  count    = var.terraform_backend_config_file_path != "" && var.enabled == true ? 1 : 0
+  count    = var.terraform_backend_config_file_path != "" && var.enabled ? 1 : 0
   content  = data.template_file.terraform_backend_config[0].rendered
   filename = local.terraform_backend_config_file
 }

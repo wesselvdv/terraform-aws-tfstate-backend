@@ -15,6 +15,7 @@ locals {
 
 module "base_label" {
   source              = "git::https://github.com/cloudposse/terraform-null-label.git?ref=tags/0.13.0"
+  enabled             = var.enabled
   namespace           = var.namespace
   environment         = var.environment
   stage               = var.stage
@@ -30,11 +31,12 @@ module "base_label" {
 
 module "s3_bucket_label" {
   source  = "git::https://github.com/cloudposse/terraform-null-label.git?ref=tags/0.13.0"
+  enabled = var.enabled
   context = module.base_label.context
 }
 
 data "aws_iam_policy_document" "prevent_unencrypted_uploads" {
-  count = local.prevent_unencrypted_uploads ? 1 : 0
+  count = local.prevent_unencrypted_uploads && var.enabled == true ? 1 : 0
 
   statement {
     sid = "DenyIncorrectEncryptionHeader"
@@ -94,6 +96,7 @@ data "aws_iam_policy_document" "prevent_unencrypted_uploads" {
 }
 
 resource "aws_s3_bucket" "default" {
+  count         = var.enabled ? 1 : 0
   bucket        = module.s3_bucket_label.id
   acl           = var.acl
   region        = var.region
@@ -117,7 +120,8 @@ resource "aws_s3_bucket" "default" {
 }
 
 resource "aws_s3_bucket_public_access_block" "default" {
-  bucket                  = aws_s3_bucket.default.id
+  count                   = var.enabled ? 1 : 0
+  bucket                  = aws_s3_bucket.default[0].id
   block_public_acls       = var.block_public_acls
   ignore_public_acls      = var.ignore_public_acls
   block_public_policy     = var.block_public_policy
@@ -125,13 +129,14 @@ resource "aws_s3_bucket_public_access_block" "default" {
 }
 
 module "dynamodb_table_label" {
+  enabled    = var.enabled
   source     = "git::https://github.com/cloudposse/terraform-null-label.git?ref=tags/0.13.0"
   context    = module.base_label.context
   attributes = compact(concat(var.attributes, ["lock"]))
 }
 
 resource "aws_dynamodb_table" "with_server_side_encryption" {
-  count          = var.enable_server_side_encryption ? 1 : 0
+  count          = var.enable_server_side_encryption && var.enabled == true ? 1 : 0
   name           = module.dynamodb_table_label.id
   read_capacity  = var.read_capacity
   write_capacity = var.write_capacity
@@ -159,7 +164,7 @@ resource "aws_dynamodb_table" "with_server_side_encryption" {
 }
 
 resource "aws_dynamodb_table" "without_server_side_encryption" {
-  count          = var.enable_server_side_encryption ? 0 : 1
+  count          = var.enable_server_side_encryption && var.enabled == true ? 0 : 1
   name           = module.dynamodb_table_label.id
   read_capacity  = var.read_capacity
   write_capacity = var.write_capacity
@@ -183,11 +188,12 @@ resource "aws_dynamodb_table" "without_server_side_encryption" {
 }
 
 data "template_file" "terraform_backend_config" {
+  count    = var.enabled ? 1 : 0
   template = file("${path.module}/templates/terraform.tf.tpl")
 
   vars = {
     region = var.region
-    bucket = aws_s3_bucket.default.id
+    bucket = aws_s3_bucket.default[0].id
 
     dynamodb_table = element(
       coalescelist(
@@ -206,7 +212,7 @@ data "template_file" "terraform_backend_config" {
 }
 
 resource "local_file" "terraform_backend_config" {
-  count    = var.terraform_backend_config_file_path != "" ? 1 : 0
-  content  = data.template_file.terraform_backend_config.rendered
+  count    = var.terraform_backend_config_file_path != "" && var.enabled == true ? 1 : 0
+  content  = data.template_file.terraform_backend_config[0].rendered
   filename = local.terraform_backend_config_file
 }

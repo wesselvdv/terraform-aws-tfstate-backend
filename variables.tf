@@ -191,3 +191,9 @@ variable "terraform_state_file" {
   default     = "terraform.tfstate"
   description = "The path to the state file inside the bucket"
 }
+
+variable "enabled" {
+  type        = bool
+  default     = true
+  description = "Set to false to prevent the module from creating any resources"
+}

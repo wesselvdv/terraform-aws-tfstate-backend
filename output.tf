@@ -1,15 +1,15 @@
 output "s3_bucket_domain_name" {
-  value       = aws_s3_bucket.default.bucket_domain_name
+  value       = aws_s3_bucket.default[0].bucket_domain_name
   description = "S3 bucket domain name"
 }
 
 output "s3_bucket_id" {
-  value       = aws_s3_bucket.default.id
+  value       = aws_s3_bucket.default[0].id
   description = "S3 bucket ID"
 }
 
 output "s3_bucket_arn" {
-  value       = aws_s3_bucket.default.arn
+  value       = aws_s3_bucket.default[0].arn
   description = "S3 bucket ARN"
 }
 
@@ -17,7 +17,8 @@ output "dynamodb_table_name" {
   value = element(
     coalescelist(
       aws_dynamodb_table.with_server_side_encryption.*.name,
-      aws_dynamodb_table.without_server_side_encryption.*.name
+      aws_dynamodb_table.without_server_side_encryption.*.name,
+      [""]
     ),
     0
   )
@@ -47,6 +48,6 @@ output "dynamodb_table_arn" {
 }
 
 output "terraform_backend_config" {
-  value       = data.template_file.terraform_backend_config.rendered
+  value       = data.template_file.terraform_backend_config[0].rendered
   description = "Rendered Terraform backend config file"
 }

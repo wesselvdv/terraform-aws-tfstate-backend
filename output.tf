@@ -9,7 +9,7 @@ output "s3_bucket_id" {
 }
 
 output "s3_bucket_arn" {
-  value       = join(aws_s3_bucket.default.*.arn)
+  value       = join("", aws_s3_bucket.default.*.arn)
   description = "S3 bucket ARN"
 }
 
